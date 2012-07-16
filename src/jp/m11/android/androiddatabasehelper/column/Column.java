@@ -1,4 +1,4 @@
-package jp.m11.android.androiddatabasehelper;
+package jp.m11.android.androiddatabasehelper.column;
 
 public abstract class Column<T> {
 	private String _columnName = null;
@@ -24,6 +24,8 @@ public abstract class Column<T> {
 	public void setValue( T value ) {
 		this._value = value;
 	}
+	
+	public abstract Class<?> getColumnDataType();
 
 	public abstract String getDataTypeString();
 }
