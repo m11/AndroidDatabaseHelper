@@ -238,8 +238,12 @@ public abstract class DatabaseTable {
 		return ( StringColumn )this.getColumn( columnName );
 	}
 
-	public LongColumn getIntegerColumn( String columnName ) {
+	public LongColumn getLongColumn( String columnName ) {
 		return ( LongColumn )this.getColumn( columnName );
+	}
+
+	public DoubleColumn getDoubleColumn( String columnName ) {
+		return ( DoubleColumn )this.getColumn( columnName );
 	}
 
 	public String[] getColumnNameList() {
@@ -253,11 +257,6 @@ public abstract class DatabaseTable {
 
 		return columnNameArray.toArray( new String[]{} );
 	}
-
-	public DoubleColumn getDoubleColumn( String columnName ) {
-		return ( DoubleColumn )this.getColumn( columnName );
-	}
-
 	public Iterator<Column<?>> getColumnIterator() {
 		return this._columns.iterator();
 	}

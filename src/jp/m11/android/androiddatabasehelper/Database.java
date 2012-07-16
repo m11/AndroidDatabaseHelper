@@ -66,7 +66,7 @@ public abstract class Database {
 	}
 
 	public abstract String getDatabaseName();
-	
+
 	public String getDatabaseFileName() {
 		return this.getDatabaseName() + Database.DATABASE_EXTENSION;
 	}

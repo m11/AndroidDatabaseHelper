@@ -1,17 +1,21 @@
 package jp.m11.android.androiddatabasehelper;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
+
 import jp.m11.android.utils.logger.Logger;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 public class DatabaseCriticalSection {
-	private static DatabaseCriticalSection _instance = null;
+	private static HashMap<Class<?>, DatabaseCriticalSection> _instances = new HashMap<Class<?>, DatabaseCriticalSection>();
 
 	private long _nextId = 0;
 	
-	private Class<Database> _databaseClass = null;
+	private Context _context = null;
+	private Class<? extends Database> _databaseClass = null;
 
 	private ArrayList<Long> _readableDatabaseCriticalSection = new ArrayList<Long>();
 	private ArrayList<Long> _writableDatabaseCriticalSection = new ArrayList<Long>();
@@ -19,35 +23,31 @@ public class DatabaseCriticalSection {
 	private Database _readableDatabase = null;
 	private Database _writableDatabase = null;
 	
-	private DatabaseCriticalSection() {
-		
+	private DatabaseCriticalSection( Context context, Class<? extends Database> databaseClass ) {
+		this._context = context;
+		this._databaseClass = databaseClass;
 	}
 
-	public synchronized static DatabaseCriticalSection getInstance() {
-		if ( _instance == null ) {
-			_instance = new DatabaseCriticalSection();
+	public synchronized static DatabaseCriticalSection getInstance( Context context, Class<? extends Database> databaseClass ) {
+		DatabaseCriticalSection instance = _instances.get( databaseClass );
+		if ( instance == null ) {
+			instance = new DatabaseCriticalSection( context, databaseClass );
+			_instances.put( databaseClass, instance );
 		}
-		return _instance;
+		return instance;
 	}
 
-	public static SQLiteDatabase enterReadable( Context context ) {
-		DatabaseCriticalSection criticalSection = null;
-
-		criticalSection = DatabaseCriticalSection.getInstance();
-		criticalSection.enterReadableCriticalSection();
-
-		return criticalSection.openReadableDatabase();
+	public SQLiteDatabase enterReadable( Context context ) {
+		this.enterReadableCriticalSection();
+		return this.openReadableDatabase();
 	}
 
 	/**
 	 * データベース読み込みクリティカルセクションから出る。
 	 */
-	public static void leaveReadable() {
-		DatabaseCriticalSection criticalSection = null;
-		
-		criticalSection = DatabaseCriticalSection.getInstance();
-		criticalSection.closeReadableDatabase();
-		criticalSection.leaveReadableCriticalSection();
+	public void leaveReadable() {
+		this.closeReadableDatabase();
+		this.leaveReadableCriticalSection();
 	}
 	
 	private synchronized void enterReadableCriticalSection() {
@@ -75,12 +75,20 @@ public class DatabaseCriticalSection {
 	 * @return
 	 */
 	private synchronized SQLiteDatabase openReadableDatabase() {
-		if ( _readableDatabase != null ) {
+		if ( _readableDatabase == null ) {
 			try {
-				_readableDatabase = _databaseClass.newInstance();
+				Class<?>[] types = { Context.class };
+				Object[] args = { this._context };
+				_readableDatabase = _databaseClass.getConstructor( types ).newInstance( args );
 			} catch (InstantiationException e) {
 				Logger.getInstance().error( e.getMessage() );
 			} catch (IllegalAccessException e) {
+				Logger.getInstance().error( e.getMessage() );
+			} catch (IllegalArgumentException e) {
+				Logger.getInstance().error( e.getMessage() );
+			} catch (InvocationTargetException e) {
+				Logger.getInstance().error( e.getMessage() );
+			} catch (NoSuchMethodException e) {
 				Logger.getInstance().error( e.getMessage() );
 			}
 		}
@@ -98,21 +106,14 @@ public class DatabaseCriticalSection {
 		}
 	}
 
-	public static SQLiteDatabase enterWritable( Context context ) {
-		DatabaseCriticalSection criticalSection = null;
-
-		criticalSection = DatabaseCriticalSection.getInstance();
-		criticalSection.enterWritableCriticalSection();
-
-		return criticalSection.openWritableDatabase();
+	public SQLiteDatabase enterWritable( Context context ) {
+		this.enterWritableCriticalSection();
+		return this.openWritableDatabase();
 	}
 	
-	public static void leaveWritable() {
-		DatabaseCriticalSection criticalSection = null;
-		
-		criticalSection = DatabaseCriticalSection.getInstance();
-		criticalSection.closeWritableDatabase();
-		criticalSection.leaveWritableCriticalSection();
+	public void leaveWritable() {
+		this.closeWritableDatabase();
+		this.leaveWritableCriticalSection();
 	}
 	
 	private synchronized void enterWritableCriticalSection() {
@@ -137,12 +138,20 @@ public class DatabaseCriticalSection {
 	 * @return
 	 */
 	private synchronized SQLiteDatabase openWritableDatabase() {
-		if ( _readableDatabase != null ) {
+		if ( _writableDatabase == null ) {
 			try {
-				_writableDatabase = _databaseClass.newInstance();
+				Class<?>[] types = { Context.class };
+				Object[] args = { this._context };
+				_writableDatabase = _databaseClass.getConstructor( types ).newInstance( args );
 			} catch (InstantiationException e) {
 				Logger.getInstance().error( e.getMessage() );
 			} catch (IllegalAccessException e) {
+				Logger.getInstance().error( e.getMessage() );
+			} catch (IllegalArgumentException e) {
+				Logger.getInstance().error( e.getMessage() );
+			} catch (InvocationTargetException e) {
+				Logger.getInstance().error( e.getMessage() );
+			} catch (NoSuchMethodException e) {
 				Logger.getInstance().error( e.getMessage() );
 			}
 		}
