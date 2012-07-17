@@ -7,9 +7,9 @@ AndroidのSQLiteデータベースを操作するクラス郡です。
 主要なクラスは以下のとおりです
 * Database
  * 1つのデータベースを表現するクラスです
-* DatabaseTable
+* Table
  * 1つのテーブルを表現するクラスです
-* StiDatabaseTable
+* StiTable
  * 1つのテーブルを複数のデータベーステーブルクラスで共有できるクラスです
 * DatabaseCriticalSection
  * マルチスレッドのアプリケーションにおいて、データベースへの同時アクセスを抑止する機能です
