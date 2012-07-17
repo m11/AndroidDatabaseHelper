@@ -1,9 +1,17 @@
 package jp.m11.android.androiddatabasehelper;
 
+import jp.m11.android.androiddatabasehelper.column.StringColumn;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 public abstract class StiDatabaseTable extends DatabaseTable {
+	public final static String COLUMN_TYPE = "type";
+
+	public StiDatabaseTable() {
+		super();
+		this.addColumn( new StringColumn( StiDatabaseTable.COLUMN_TYPE, this.getType() ) );
+	}
+
 	@Override
 	public Cursor query( SQLiteDatabase database, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit ) {
 		String[] stiSelectionArgs = null;

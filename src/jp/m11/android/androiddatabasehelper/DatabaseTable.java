@@ -127,7 +127,19 @@ public abstract class DatabaseTable {
 
 	public boolean first( SQLiteDatabase database ) {
 		boolean result = false;
-		Cursor cursor = this.query( database, this.getColumnNameList(), null, null, null, null, null, null );
+		Cursor cursor = this.query( database, this.getColumnNameList(), null, null, null, null, "id ASC", "1" );
+		cursor.moveToFirst();
+
+		if ( cursor.getCount() >= 1 ) {
+			loadRecord( cursor );
+			result = true;
+		}
+		return result;
+	}
+
+	public boolean last( SQLiteDatabase database ) {
+		boolean result = false;
+		Cursor cursor = this.query( database, this.getColumnNameList(), null, null, null, null, "id DESC", "1" );
 		cursor.moveToFirst();
 
 		if ( cursor.getCount() >= 1 ) {
