@@ -18,7 +18,7 @@ public class Record {
 
 	public Record( Class<? extends Table> tableClass ) {
 		Iterator<Column<?>> iterator = null;
-		this._table = TableManager.getTableInstance( tableClass );
+		this._table = TableInstanceHolder.getTableInstance( tableClass );
 
 		iterator = this._table.getColumnIterator();
 
@@ -77,7 +77,7 @@ public class Record {
 		for ( int i = 0; i < columnNameList.length; i++ ) {
 			Column<?> column = this.getColumn( columnNameList[i] );
 			Class<?> columnClass = column.getColumnDataType();
-	
+
 			if ( cursor.isNull( i ) == false ) {
 				if ( columnClass.equals( Long.class ) ) {
 					( ( LongColumn ) column ).setValue( cursor.getLong( i ) );
@@ -100,7 +100,7 @@ public class Record {
 	public Column<?> getColumn( String columnName ) {
 		Iterator<Column<?>> iterator = null;
 		Column<?> result = null;
-		iterator = this._table.getColumnIterator();
+		iterator = this._columns.iterator();
 		
 		while( iterator.hasNext() ) {
 			Column<?> column = iterator.next();
@@ -143,7 +143,7 @@ public class Record {
 		Iterator<Column<?>> iterator = null;
 	
 		values = new ContentValues();
-		iterator = this._table.getColumnIterator();
+		iterator = this._columns.iterator();
 	
 		while( iterator.hasNext() ) {
 			Column<?> column = null;

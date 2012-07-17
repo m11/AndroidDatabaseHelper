@@ -59,11 +59,21 @@ public abstract class Table {
 		return database.query( this.getTableName(), columns, selection, selectionArgs, groupBy, having, orderBy, limit );
 	}
 
+	/**
+	 * カラムイテレータを取得する。
+	 * @return
+	 */
 	public Iterator<Column<?>> getColumnIterator() {
 		return this._columns.iterator();
 	}
 
+	/**
+	 * テーブルに属するカラムを追加する。
+	 * 引数に指定したカラムはメソッド内でイミュータブルにする。
+	 * @param column
+	 */
 	protected void addColumn( Column<?> column ) {
+		column.setImmutable();
 		this._columns.add( column );
 	}
 
