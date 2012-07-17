@@ -2,10 +2,21 @@ AndroidDatabaseHelper
 =====================
 
 ## 概要
-AndroidのSQLiteデータベースを使いやすくしてみたい！
-ということではじめてみました。
+AndroidのSQLiteデータベースを操作するクラス郡です。
 
-## 新規テーブル作成
+主要なクラスは以下のとおりです
+* Database
+ * 1つのデータベースを表現するクラスです
+* DatabaseTable
+ * 1つのテーブルを表現するクラスです
+* StiDatabaseTable
+ * 1つのテーブルを複数のデータベーステーブルクラスで共有できるクラスです
+* DatabaseCriticalSection
+ * マルチスレッドのアプリケーションにおいて、データベースへの同時アクセスを抑止する機能です
+ * シングルスレッドで使用する場合必要ありません
+
+## 使い方
+### 新規テーブル作成
 * DatabaseTableクラスを継承する
 * コンストラクタでaddColumnメソッドを呼び、カラムを追加する
  * カラムは任意の型で作成する
@@ -20,8 +31,6 @@ import jp.m11.android.androiddatabasehelper.column.LongColumn;
 import jp.m11.android.androiddatabasehelper.column.StringColumn;
 
 public class TableA extends DatabaseTable {
-	public final static String TABLE_NAME = "TableA";
-
 	public TableA() {
 		this.addColumn( new StringColumn( "title" ) );
 		this.addColumn( new StringColumn( "body" ) );
@@ -30,7 +39,7 @@ public class TableA extends DatabaseTable {
 
 	@Override
 	public String getTableName() {
-		return TABLE_NAME;
+		return "TableA";
 	}
 
 	@Override
@@ -39,7 +48,7 @@ public class TableA extends DatabaseTable {
 }
 ```
 
-## 新規データベース作成
+### 新規データベース作成
 * Databaseクラスを継承する
 * コンストラクタでaddTableメソッドを呼び、データベースにテーブルを追加する
 * getDatabaseNameをオーバライドし、データベース名を返すようにする
@@ -68,7 +77,7 @@ public class SampleDatabase extends Database {
 }
 ```
 
-## データベースクリティカルセクション
+### データベースクリティカルセクション
 マルチスレッドで同時にアクセスした場合例外が発生するためクリティカルセクションを設けました。
 書き込み専用でデータベースを開いた状態で読み込み専用で同時にアクセスしても例外は発生しないようなので、1つのデータベースあたり、読み込み用と書き込み用の2つのクリティカルセクションを用意しました。
 使い方は以下のとおりです。
