@@ -4,12 +4,12 @@ import jp.m11.android.androiddatabasehelper.column.StringColumn;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-public abstract class StiDatabaseTable extends DatabaseTable {
+public abstract class StiTable extends Table {
 	public final static String COLUMN_TYPE = "type";
 
-	public StiDatabaseTable() {
+	public StiTable() {
 		super();
-		this.addColumn( new StringColumn( StiDatabaseTable.COLUMN_TYPE, this.getType() ) );
+		this.addColumn( new StringColumn( StiTable.COLUMN_TYPE, this.getType() ) );
 	}
 
 	@Override
@@ -28,11 +28,6 @@ public abstract class StiDatabaseTable extends DatabaseTable {
 			stiSelectionArgs[ selectionArgs.length - 1 ] = this.getType();
 		}
 		return super.query( database, columns, selection, stiSelectionArgs, groupBy, having, orderBy, limit );
-	}
-
-	@Override
-	public long insert( SQLiteDatabase database ) {
-		return super.insert( database );
 	}
 
 	public abstract String getType();

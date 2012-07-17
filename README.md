@@ -97,3 +97,16 @@ database = cs.enterWritable( this );
 //ここでデータベースにアクセスする
 cs.leaveWritable();
 ```
+
+### SELECT
+```
+DatabaseCriticalSection cs = DatabaseCriticalSection.getInstance( context, SampleDatabase.class );
+SQLiteDatabase database = null;
+
+database = cs.enterWritable( this );
+TableA tableA = new TableA();
+Cursor cursor = tableA.query( database, null, null, null, null, null, null, null );
+cursor.moveToFirst();
+tableA.loadRecord( cursor );
+cs.leaveWritable();
+```

@@ -37,7 +37,7 @@ public abstract class Database {
 		while( iterator.hasNext() ) {
 			Class<?> tableClass = iterator.next();
 			try {
-				( ( DatabaseTable )tableClass.newInstance() ).create( this._context, database );
+				( ( Table )tableClass.newInstance() ).create( this._context, database );
 			} catch (InstantiationException e) {
 				Logger.getInstance().error( e.getMessage() );
 			} catch (IllegalAccessException e) {
@@ -55,7 +55,7 @@ public abstract class Database {
 		while( iterator.hasNext() ) {
 			Class<?> tableClass = iterator.next();
 			try {
-				( ( DatabaseTable )tableClass.newInstance() ).upgrade( this._context, database );
+				( ( Table )tableClass.newInstance() ).upgrade( this._context, database );
 			} catch (InstantiationException e) {
 				Logger.getInstance().error( e.getMessage() );
 			} catch (IllegalAccessException e) {
