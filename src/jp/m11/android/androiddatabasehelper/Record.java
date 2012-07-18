@@ -8,6 +8,12 @@ import jp.m11.android.androiddatabasehelper.column.DoubleColumn;
 import jp.m11.android.androiddatabasehelper.column.LongColumn;
 import jp.m11.android.androiddatabasehelper.column.StringColumn;
 import jp.m11.android.utils.logger.Logger;
+import jp.m11.android.utils.string.DateFormatUtil;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -26,24 +32,52 @@ public class Record {
 			Column<?> tableColumn = iterator.next();
 
 			try {
-				Column<?> column = null;
-				Class<?> columnDataType = tableColumn.getColumnDataType();
-				if ( columnDataType == String.class ) {
-					column = new StringColumn( tableColumn.getColumnName(), ( String )tableColumn.getValue() );
-				}
-				else if ( columnDataType == Long.class ) {
-					column = new LongColumn( tableColumn.getColumnName(), ( Long )tableColumn.getValue() );
-				}
-				else if ( columnDataType == Double.class ) {
-					column = new DoubleColumn( tableColumn.getColumnName(), ( Double )tableColumn.getValue() );
-				}
-				this._columns.add( column );
+				this._columns.add( tableColumn.clone( false ) );
 			} catch (IllegalArgumentException e) {
 				Logger.getInstance().error( e.getMessage() );
 			}
 		}
 	}
 
+	/**
+	 * 自身のインスタンスの情報をデータベースに挿入する。
+	 * インサートに成功した場合は、idカラムを上書きする。
+	 * @param database
+	 * @return
+	 */
+	public long insert( SQLiteDatabase database ) {
+		Long rowId = null;
+	
+		this.updateUpdatedAt();
+		rowId = database.insert( this._table.getTableName(), null, this.toContentValue() );
+	
+		if ( rowId != -1 ) {
+			this.getIdColumn().setValue( rowId );
+		}
+		else {
+			Logger.getInstance().warn( "Failed to insert." );
+		}
+	
+		return rowId;
+	}
+
+	/**
+	 * 自身のインスタンスの情報でレコードを更新する。
+	 * @param database
+	 * @return
+	 */
+	public int update( SQLiteDatabase database ) {
+		String[] whereArgs = { this.getIdColumn().getValue().toString() };
+		this.updateUpdatedAt();
+		return database.update( this._table.getTableName(), toContentValue(), "id = ?", whereArgs);
+	}
+
+	/**
+	 * idからレコードを取得する。
+	 * @param database
+	 * @param id
+	 * @return
+	 */
 	public boolean find( SQLiteDatabase database, long id ) {
 		boolean result = false;
 		String[] selectionArgs = { Long.toString( id ) };
@@ -69,6 +103,112 @@ public class Record {
 		return result;
 	}
 
+	public boolean last( SQLiteDatabase database ) {
+		boolean result = false;
+		Cursor cursor = this._table.query( database, this._table.getColumnNameList(), null, null, null, null, "id DESC", "1" );
+		cursor.moveToFirst();
+	
+		if ( cursor.getCount() >= 1 ) {
+			this.loadRecord( cursor );
+			result = true;
+		}
+		return result;
+	}
+
+	/**
+	 * データベースからこのインスタンスが保持するレコードを削除する。
+	 * 実際にはこのインスタンスが持つidの値に一致するレコードを削除する。
+	 * @param database
+	 * @return
+	 */
+	public int delete( SQLiteDatabase database ) {
+		String[] whereArgs = { this.getIdColumn().getValue().toString() };
+		return database.delete( this._table.getTableName(), "id = ?", whereArgs);
+	}
+
+	/**
+	 * 引数に指定したカラム名のカラムを取得する。
+	 * @param columnName
+	 * @return
+	 */
+	public Column<?> getColumn( String columnName ) {
+		Iterator<Column<?>> iterator = null;
+		Column<?> result = null;
+		iterator = this._columns.iterator();
+		
+		while( iterator.hasNext() ) {
+			Column<?> column = iterator.next();
+			if ( column.getColumnName() == columnName ) {
+				result = column;
+				break;
+			}
+		}
+		
+		return result;
+	}
+
+	/**
+	 * 引数に指定したカラム名のカラムをStringColumnクラスとして取得する。
+	 * @param columnName
+	 * @return
+	 */
+	public StringColumn getStringColumn( String columnName ) {
+		return ( StringColumn )this.getColumn( columnName );
+	}
+
+	/**
+	 * 引数に指定したカラム名のカラムをLongColumnクラスとして取得する。
+	 * @param columnName
+	 * @return
+	 */
+	public LongColumn getLongColumn( String columnName ) {
+		return ( LongColumn )this.getColumn( columnName );
+	}
+
+	/**
+	 * 引数に指定したカラム名のカラムをDoubleColumnクラスとして取得する。
+	 * @param columnName
+	 * @return
+	 */
+	public DoubleColumn getDoubleColumn( String columnName ) {
+		return ( DoubleColumn )this.getColumn( columnName );
+	}
+
+	/**
+	 * idカラムのインスタンスを取得する。
+	 * @return idカラムのインスタンス。
+	 */
+	public LongColumn getIdColumn() {
+		return ( LongColumn )this.getColumn( Table.COLUMN_ID );
+	}
+
+	/**
+	 * created_atカラムのインスタンスを取得する。
+	 * @return created_atカラムのインスタンス。
+	 */
+	public LongColumn getCreatedAtColumn() {
+		return ( LongColumn )this.getColumn( Table.COLUMN_CREATED_AT );
+	}
+
+	/**
+	 * updated_atカラムのインスタンスを取得する。
+	 * @return
+	 */
+	public LongColumn getUpdatedAtColumn() {
+		return ( LongColumn )this.getColumn( Table.COLUMN_UPDATED_AT );
+	}
+
+	/**
+	 * updated_atカラムの値を更新する。
+	 */
+	public void updateUpdatedAt() {
+		this.getUpdatedAtColumn().setValue( System.currentTimeMillis() );
+	}
+
+	/**
+	 * cursorの示すレコードを自信のインスタンスに読み込む。
+	 * @param cursor
+	 */
 	public void loadRecord( Cursor cursor ) {
 		String[] columnNameList = null;
 		
@@ -93,51 +233,9 @@ public class Record {
 	}
 
 	/**
-	 * 引数に指定したカラム名のカラムを取得する。
-	 * @param columnName
+	 * テーブルの内容をContentValuesとして出力する。
 	 * @return
 	 */
-	public Column<?> getColumn( String columnName ) {
-		Iterator<Column<?>> iterator = null;
-		Column<?> result = null;
-		iterator = this._columns.iterator();
-		
-		while( iterator.hasNext() ) {
-			Column<?> column = iterator.next();
-			if ( column.getColumnName() == columnName ) {
-				result = column;
-				break;
-			}
-		}
-		
-		return result;
-	}
-
-	public int delete( SQLiteDatabase database ) {
-		String[] whereArgs = { this.getIdColumn().getValue().toString() };
-		return database.delete( this._table.getTableName(), "id = ?", whereArgs);
-	}
-
-	public int delete( SQLiteDatabase database, String selection, String[] whereArgs ) {
-		return database.delete( this._table.getTableName(), selection, whereArgs );
-	}
-
-	public LongColumn getCreatedAtColumn() {
-		return ( LongColumn )this.getColumn( Table.COLUMN_CREATED_AT );
-	}
-
-	public boolean last( SQLiteDatabase database ) {
-		boolean result = false;
-		Cursor cursor = this._table.query( database, this._table.getColumnNameList(), null, null, null, null, "id DESC", "1" );
-		cursor.moveToFirst();
-	
-		if ( cursor.getCount() >= 1 ) {
-			this.loadRecord( cursor );
-			result = true;
-		}
-		return result;
-	}
-
 	public ContentValues toContentValue() {
 		ContentValues values = null;
 		Iterator<Column<?>> iterator = null;
@@ -166,53 +264,73 @@ public class Record {
 		return values;
 	}
 
-	public LongColumn getUpdatedAtColumn() {
-		return ( LongColumn )this.getColumn( Table.COLUMN_UPDATED_AT );
-	}
-
-	public long insert( SQLiteDatabase database ) {
-		Long rowId = null;
-	
-		this.updateUpdatedAt();
-		rowId = database.insert( this._table.getTableName(), null, this.toContentValue() );
-
-		if ( rowId != -1 ) {
-			this.getIdColumn().setValue( rowId );
-		}
-		else {
-			Logger.getInstance().warn( "Failed to insert." );
-		}
-	
-		return rowId;
-	}
-
-	public void updateUpdatedAt() {
-		this.getUpdatedAtColumn().setValue( System.currentTimeMillis() );
-	}
-
-	public int update( SQLiteDatabase database ) {
-		String[] whereArgs = { this.getIdColumn().getValue().toString() };
-		this.updateUpdatedAt();
-		return database.update( this._table.getTableName(), toContentValue(), "id = ?", whereArgs);
-	}
-
-	public DoubleColumn getDoubleColumn( String columnName ) {
-		return ( DoubleColumn )this.getColumn( columnName );
-	}
-
 	/**
-	 * IDを取得する。
+	 * テーブルの内容をJSONとして出力する。
 	 * @return
 	 */
-	public LongColumn getIdColumn() {
-		return ( LongColumn )this.getColumn( Table.COLUMN_ID );
+	public JSONObject toJson() {
+		JSONObject result = new JSONObject();
+		Iterator<Column<?>> iterator = this._columns.iterator();
+
+		while( iterator.hasNext() ) {
+			Column<?> column = iterator.next();
+			Object value = null;
+			if (
+					column.getColumnName() == Table.COLUMN_CREATED_AT ||
+					column.getColumnName() == Table.COLUMN_UPDATED_AT
+			) {
+				value = DateFormatUtil.gmtDbFormat( ( Long )column.getValue() );
+			}
+			else {
+				value = column.getValue();
+			}
+			try {
+				result.put( column.getColumnName(), value );
+			}
+			catch ( JSONException e ) {
+				Logger.getInstance().error( e.getMessage() );
+			}
+		}
+		
+		return result;
 	}
 
-	public LongColumn getLongColumn( String columnName ) {
-		return ( LongColumn )this.getColumn( columnName );
+	public boolean fromJson( String json ) {
+		return fromJson( json, false );
 	}
 
-	public StringColumn getStringColumn( String columnName ) {
-		return ( StringColumn )this.getColumn( columnName );
+	public boolean fromJson( String json, boolean overWriteAll ) {
+		boolean result = false;
+		try {
+			result = fromJson( ( JSONObject ) new JSONTokener( json ).nextValue(), overWriteAll );
+		} catch (JSONException e) {
+			Logger.getInstance().error( e.getMessage() );
+		}
+		return result;
+	}
+
+	public boolean fromJson( JSONObject jsonObject ) {
+		return fromJson( jsonObject, false );
+	}
+
+	public boolean fromJson( JSONObject jsonObject, boolean overWriteAll ) {
+		boolean result = false;
+		Iterator<Column<?>> iterator = _columns.iterator();
+
+		try {
+			while ( iterator.hasNext() ) {
+				Column<?> column = iterator.next();
+				
+				if ( jsonObject.has( column.getColumnName() ) ) {
+					column.setValue( jsonObject, overWriteAll );
+				}
+			}
+
+			result = true;
+		} catch (JSONException e) {
+			Logger.getInstance().error( e.getMessage() );
+		}
+		
+		return result;
 	}
 }
