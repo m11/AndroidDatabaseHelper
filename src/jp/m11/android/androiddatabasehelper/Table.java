@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import jp.m11.android.androiddatabasehelper.column.Column;
-import jp.m11.android.androiddatabasehelper.column.LongColumn;
+import jp.m11.android.androiddatabasehelper.column.CreatedAtColumn;
+import jp.m11.android.androiddatabasehelper.column.IdColumn;
+import jp.m11.android.androiddatabasehelper.column.UpdatedAtColumn;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -19,9 +21,9 @@ public abstract class Table {
 		long now = 0;
 		now = System.currentTimeMillis();
 
-		_columns.add( new LongColumn( COLUMN_ID, null ) );
-		_columns.add( new LongColumn( COLUMN_CREATED_AT, now ) );
-		_columns.add( new LongColumn( COLUMN_UPDATED_AT, now ) );
+		_columns.add( new IdColumn() );
+		_columns.add( new CreatedAtColumn( now ) );
+		_columns.add( new UpdatedAtColumn( now ) );
 	}
 
 	public abstract String getTableName();
@@ -51,6 +53,10 @@ public abstract class Table {
 	
 	public void create( Context context, SQLiteDatabase database ) {
 		database.execSQL( this.getCreateSql() );
+	}
+
+	public int delete( SQLiteDatabase database, String selection, String[] whereArgs ) {
+		return database.delete( this.getTableName(), selection, whereArgs );
 	}
 
 	public abstract void upgrade( Context context, SQLiteDatabase database );
