@@ -10,14 +10,15 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public abstract class Database {
 	private final static String DATABASE_EXTENSION = ".db";
+	private final static String DATABASE_FIXTUREDIRECTORY_PATH = "database/fixtures";
 
 	private Context _context = null;
 	private SQLiteOpenHelper _openHelper = null;
-	private ArrayList<Class<?>> _tableClasses = null;
+	private ArrayList<Class<? extends Table>> _tableClasses = null;
 
 	public Database( Context context ) {
 		this._context = context;
-		this._tableClasses = new ArrayList<Class<?>>();
+		this._tableClasses = new ArrayList<Class<? extends Table>>();
 		this._openHelper = new OpenHelper( context );
 	}
 
@@ -25,12 +26,12 @@ public abstract class Database {
 		return null;
 	}
 
-	protected void addTable( Class<?> tableClass ) {
+	protected void addTable( Class<? extends Table> tableClass ) {
 		this._tableClasses.add( tableClass );
 	}
 
 	public void onCreate( SQLiteDatabase database ) {
-		Iterator<Class<?>> iterator = null;
+		Iterator<Class<? extends Table>> iterator = null;
 
 		iterator = this._tableClasses.iterator();
 
@@ -48,7 +49,7 @@ public abstract class Database {
 	}
 
 	public void onUpgrade( SQLiteDatabase database, int oldVersion, int newVersion ) {
-		Iterator<Class<?>> iterator = null;
+		Iterator<Class<? extends Table>> iterator = null;
 		
 		iterator = this._tableClasses.iterator();
 
@@ -78,6 +79,25 @@ public abstract class Database {
 	
 	public SQLiteDatabase getWritableDatabase() {
 		return _openHelper.getWritableDatabase();
+	}
+
+	public int loadFixture( SQLiteDatabase database ) {
+		Iterator<Class<? extends Table>> iterator = this._tableClasses.iterator();
+		int totalLoadedRecordCount = 0;
+		
+		while( iterator.hasNext() ) {
+			try {
+				Table table = iterator.next().newInstance();
+				
+				String path = Database.DATABASE_FIXTUREDIRECTORY_PATH + "/" + this.getDatabaseName() + "/" + table.getTableName() + "." + Table.DATABASE_FIXTURE_EXTENSION;
+				totalLoadedRecordCount += table.loadFixtures( this._context, database, path );
+			} catch (InstantiationException e) {
+				Logger.getInstance().verbose( e.getMessage() );
+			} catch (IllegalAccessException e) {
+				Logger.getInstance().verbose( e.getMessage() );
+			}
+		}
+		return totalLoadedRecordCount;
 	}
 
 	public void close() {

@@ -32,6 +32,9 @@ public abstract class Table {
 	public final static String XML_ATTRIBUTE_COLUMN = "column";
 	public final static String XML_ATTRIBUTE_TYPE = "type";
 	public final static String XML_ATTRIBUTE_NAME = "name";
+
+	public final static String DATABASE_FIXTURE_EXTENSION = "xml";
+
 	private ArrayList<Column<?>> _columns = new ArrayList<Column<?>>();
 
 	public Table() {
@@ -97,15 +100,14 @@ public abstract class Table {
 			factory.setNamespaceAware( false );
 			XmlPullParser xmlPullParser = factory.newPullParser();
 			xmlPullParser.setInput( new StringReader( xmlString ) );
-			
+
 			int eventType = 0;
 			String tableName = null;
-			String columnName = null;
 			String recordType = null;
 			String tagName = null;
 			ArrayList<String> hierarchy = new ArrayList<String>();
 			ContentValues contentValues = null;
-			
+
 			eventType = xmlPullParser.getEventType();
 			while( eventType != XmlPullParser.END_DOCUMENT ) {
 				if ( eventType == XmlPullParser.START_TAG ) {
@@ -122,15 +124,15 @@ public abstract class Table {
 						contentValues.put( CreatedAtColumn.COLUMN_CREATED_AT, now );
 						contentValues.put( UpdatedAtColumn.COLUMN_UPDATED_AT, now );
 					}
-					else if ( tagName.equals( Table.XML_TAG_VALUE ) ) {
-						columnName = xmlPullParser.getAttributeValue( null, Table.XML_ATTRIBUTE_COLUMN );
+					else {
 						recordType = xmlPullParser.getAttributeValue( null, Table.XML_ATTRIBUTE_TYPE );
 					}
 				}
 				else if ( eventType == XmlPullParser.TEXT ) {
-					if ( hierarchy.size() > 2 && ListUtil.indexOf( hierarchy, Table.XML_TAG_RECORD ) != ListUtil.NOT_FOUND ) {
+					if ( hierarchy.size() > 2 && ListUtil.indexOf( hierarchy, Table.XML_TAG_RECORD ) == hierarchy.size() - 2 && recordType != null ) {
 						Object value = null;
-						
+						String columnName = hierarchy.get( hierarchy.size() - 1 );
+
 						if ( recordType.equals( "String" ) ) {
 							value = xmlPullParser.getText();
 							contentValues.put( columnName, ( String )value );
@@ -154,7 +156,7 @@ public abstract class Table {
 						hierarchy.remove( hierarchy.size() - 1 );
 					}
 				}
-				xmlPullParser.next();
+				eventType = xmlPullParser.next();
 			}
 		}
 		catch ( IOException e ) {
