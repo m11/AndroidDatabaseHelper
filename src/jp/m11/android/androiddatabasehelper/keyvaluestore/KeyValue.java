@@ -16,7 +16,7 @@ public class KeyValue extends Record {
 
 	public void findByKey( SQLiteDatabase database, String key ) {
 		String[] selectionArgs = { key };
-		this.find( database, KeyValueStore.COLUMN_KEY + " = ?", selectionArgs, null, null, null, null );
+		this.find( database, KeyValueStore.COLUMN_KEY + " = ?", selectionArgs, null, null, null );
 	}
 
 	public String getKey() {

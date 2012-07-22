@@ -11,7 +11,6 @@ import jp.m11.android.androiddatabasehelper.column.CreatedAtColumn;
 import jp.m11.android.androiddatabasehelper.column.IdColumn;
 import jp.m11.android.androiddatabasehelper.column.UpdatedAtColumn;
 import jp.m11.android.utils.logger.Logger;
-import jp.m11.java.util.ListUtil;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -70,10 +69,6 @@ public abstract class Table {
 
 		return sql;
 	}
-	
-	public void create( Context context, SQLiteDatabase database ) {
-		database.execSQL( this.getCreateSql() );
-	}
 
 	public int delete( SQLiteDatabase database, String selection, String[] whereArgs ) {
 		return database.delete( this.getTableName(), selection, whereArgs );
@@ -83,6 +78,10 @@ public abstract class Table {
 
 	public Cursor query( SQLiteDatabase database, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit ) {
 		return database.query( this.getTableName(), columns, selection, selectionArgs, groupBy, having, orderBy, limit );
+	}
+	
+	public void create( Context context, SQLiteDatabase database ) {
+		database.execSQL( this.getCreateSql() );
 	}
 
 	public int loadFixtures( Context context, SQLiteDatabase database, String fileName ) {
@@ -129,7 +128,7 @@ public abstract class Table {
 					}
 				}
 				else if ( eventType == XmlPullParser.TEXT ) {
-					if ( hierarchy.size() > 2 && ListUtil.indexOf( hierarchy, Table.XML_TAG_RECORD ) == hierarchy.size() - 2 && recordType != null ) {
+					if ( hierarchy.size() > 2 && hierarchy.indexOf( Table.XML_TAG_RECORD ) == hierarchy.size() - 2 && recordType != null ) {
 						Object value = null;
 						String columnName = hierarchy.get( hierarchy.size() - 1 );
 

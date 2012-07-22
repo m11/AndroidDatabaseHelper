@@ -117,12 +117,16 @@ public class Record {
 		return result;
 	}
 
-	public boolean find( SQLiteDatabase database, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit ) {
+	public boolean find( SQLiteDatabase database, String selection, String[] selectionArgs ) {
+		return this.find( database, selection, selectionArgs, null, null, null );
+	}
+
+	public boolean find( SQLiteDatabase database, String selection, String[] selectionArgs, String groupBy, String having, String orderBy ) {
 		boolean result = false;
-		Cursor cursor = this._table.query( database, this._table.getColumnNameList(), selection, selectionArgs, groupBy, having, orderBy, limit );
+		Cursor cursor = this._table.query( database, this._table.getColumnNameList(), selection, selectionArgs, groupBy, having, orderBy, "1" );
 		cursor.moveToFirst();
-		
-		if ( cursor.getCount() > 1 ) {
+
+		if ( cursor.getCount() == 1 ) {
 			this.loadRecord( cursor );
 			result = true;
 		}

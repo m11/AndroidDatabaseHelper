@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public abstract class Database {
-	private final static String DATABASE_EXTENSION = ".db";
+	private final static String DATABASE_EXTENSION = "db";
 	private final static String DATABASE_FIXTUREDIRECTORY_PATH = "database/fixtures";
 
 	private Context _context = null;
@@ -46,6 +46,8 @@ public abstract class Database {
 			}
 		}
 		Logger.getInstance().info( "Database table \"" + this.getDatabaseFileName() + "\" created." );
+
+		this.loadFixture( database );
 	}
 
 	public void onUpgrade( SQLiteDatabase database, int oldVersion, int newVersion ) {
@@ -68,7 +70,7 @@ public abstract class Database {
 	public abstract String getDatabaseName();
 
 	public String getDatabaseFileName() {
-		return this.getDatabaseName() + Database.DATABASE_EXTENSION;
+		return this.getDatabaseName() + "." + Database.DATABASE_EXTENSION;
 	}
 
 	public abstract int getVersion();
