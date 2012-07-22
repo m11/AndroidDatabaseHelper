@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import jp.m11.android.androiddatabasehelper.column.Column;
+import jp.m11.android.androiddatabasehelper.column.CreatedAtColumn;
+import jp.m11.android.androiddatabasehelper.column.UpdatedAtColumn;
 import jp.m11.android.androiddatabasehelper.column.DoubleColumn;
 import jp.m11.android.androiddatabasehelper.column.LongColumn;
 import jp.m11.android.androiddatabasehelper.column.StringColumn;
@@ -20,7 +22,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 public class Record {
 	private Table _table = null;
-	private ArrayList<Column<?>> _columns = new ArrayList<Column<?>>();
+	protected ArrayList<Column<?>> _columns = new ArrayList<Column<?>>();
 
 	public Record( Class<? extends Table> tableClass ) {
 		Iterator<Column<?>> iterator = null;
@@ -115,6 +117,23 @@ public class Record {
 		return result;
 	}
 
+	public boolean find( SQLiteDatabase database, String selection, String[] selectionArgs ) {
+		return this.find( database, selection, selectionArgs, null, null, null );
+	}
+
+	public boolean find( SQLiteDatabase database, String selection, String[] selectionArgs, String groupBy, String having, String orderBy ) {
+		boolean result = false;
+		Cursor cursor = this._table.query( database, this._table.getColumnNameList(), selection, selectionArgs, groupBy, having, orderBy, "1" );
+		cursor.moveToFirst();
+
+		if ( cursor.getCount() == 1 ) {
+			this.loadRecord( cursor );
+			result = true;
+		}
+
+		return result;
+	}
+
 	/**
 	 * データベースからこのインスタンスが保持するレコードを削除する。
 	 * 実際にはこのインスタンスが持つidの値に一致するレコードを削除する。
@@ -187,7 +206,7 @@ public class Record {
 	 * @return created_atカラムのインスタンス。
 	 */
 	public LongColumn getCreatedAtColumn() {
-		return ( LongColumn )this.getColumn( Table.COLUMN_CREATED_AT );
+		return ( LongColumn )this.getColumn( CreatedAtColumn.COLUMN_CREATED_AT );
 	}
 
 	/**
@@ -195,7 +214,7 @@ public class Record {
 	 * @return
 	 */
 	public LongColumn getUpdatedAtColumn() {
-		return ( LongColumn )this.getColumn( Table.COLUMN_UPDATED_AT );
+		return ( LongColumn )this.getColumn( UpdatedAtColumn.COLUMN_UPDATED_AT );
 	}
 
 	/**
@@ -276,8 +295,8 @@ public class Record {
 			Column<?> column = iterator.next();
 			Object value = null;
 			if (
-					column.getColumnName() == Table.COLUMN_CREATED_AT ||
-					column.getColumnName() == Table.COLUMN_UPDATED_AT
+					column.getColumnName() == CreatedAtColumn.COLUMN_CREATED_AT ||
+					column.getColumnName() == UpdatedAtColumn.COLUMN_UPDATED_AT
 			) {
 				value = DateFormatUtil.gmtDbFormat( ( Long )column.getValue() );
 			}
