@@ -1,5 +1,5 @@
 
-AndroidDatabaseHelper
+AndroidDatabaseHelper Ver0.01
 =====================
 
 ## 概要
