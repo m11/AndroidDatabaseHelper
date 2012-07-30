@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import jp.m11.android.utils.logger.Logger;
-
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -20,24 +19,51 @@ public class DatabaseCriticalSection {
 	private ArrayList<Long> _readableDatabaseCriticalSection = new ArrayList<Long>();
 	private ArrayList<Long> _writableDatabaseCriticalSection = new ArrayList<Long>();
 	
-	private Database _readableDatabase = null;
-	private Database _writableDatabase = null;
+	private Database _database = null;
+	private SQLiteDatabase _readbleDatabase = null;
+	private SQLiteDatabase _writableDatabase = null;
+
+	private boolean _isKeepConnent = false;
 	
 	private DatabaseCriticalSection( Context context, Class<? extends Database> databaseClass ) {
 		this._context = context;
 		this._databaseClass = databaseClass;
+
+		try {
+			Class<?>[] types = { Context.class };
+			Object[] args = { this._context };
+			_database = _databaseClass.getConstructor( types ).newInstance( args );
+		} catch (InstantiationException e) {
+			Logger.getInstance().error( e.getMessage() );
+		} catch (IllegalAccessException e) {
+			Logger.getInstance().error( e.getMessage() );
+		} catch (IllegalArgumentException e) {
+			Logger.getInstance().error( e.getMessage() );
+		} catch (InvocationTargetException e) {
+			Logger.getInstance().error( e.getMessage() );
+		} catch (NoSuchMethodException e) {
+			Logger.getInstance().error( e.getMessage() );
+		}
 	}
 
 	public synchronized static DatabaseCriticalSection getInstance( Context context, Class<? extends Database> databaseClass ) {
-		DatabaseCriticalSection instance = _instances.get( databaseClass );
+		DatabaseCriticalSection instance = DatabaseCriticalSection._instances.get( databaseClass );
 		if ( instance == null ) {
 			instance = new DatabaseCriticalSection( context, databaseClass );
-			_instances.put( databaseClass, instance );
+			DatabaseCriticalSection._instances.put( databaseClass, instance );
 		}
 		return instance;
 	}
 
-	public SQLiteDatabase enterReadable( Context context ) {
+	public void setKeepConnect( boolean keepConnect ) {
+		this._isKeepConnent = keepConnect;
+	}
+
+	public Database getDatabase() {
+		return this._database;
+	}
+
+	public SQLiteDatabase enterReadable() {
 		this.enterReadableCriticalSection();
 		return this.openReadableDatabase();
 	}
@@ -52,8 +78,8 @@ public class DatabaseCriticalSection {
 	
 	private synchronized void enterReadableCriticalSection() {
 		long myId = getNewId();
-		_readableDatabaseCriticalSection.add( myId );
-		while ( _readableDatabaseCriticalSection.get( 0 ) != myId ) {
+		this._readableDatabaseCriticalSection.add( myId );
+		while ( this._readableDatabaseCriticalSection.get( 0 ) != myId ) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -66,7 +92,7 @@ public class DatabaseCriticalSection {
 	 * 読み込み
 	 */
 	private synchronized void leaveReadableCriticalSection() {
-		_readableDatabaseCriticalSection.remove( 0 );
+		this._readableDatabaseCriticalSection.remove( 0 );
 		notifyAll();
 	}
 	
@@ -75,38 +101,23 @@ public class DatabaseCriticalSection {
 	 * @return
 	 */
 	private synchronized SQLiteDatabase openReadableDatabase() {
-		if ( _readableDatabase == null ) {
-			try {
-				Class<?>[] types = { Context.class };
-				Object[] args = { this._context };
-				_readableDatabase = _databaseClass.getConstructor( types ).newInstance( args );
-			} catch (InstantiationException e) {
-				Logger.getInstance().error( e.getMessage() );
-			} catch (IllegalAccessException e) {
-				Logger.getInstance().error( e.getMessage() );
-			} catch (IllegalArgumentException e) {
-				Logger.getInstance().error( e.getMessage() );
-			} catch (InvocationTargetException e) {
-				Logger.getInstance().error( e.getMessage() );
-			} catch (NoSuchMethodException e) {
-				Logger.getInstance().error( e.getMessage() );
-			}
+		if ( this._readbleDatabase == null ) {
+			this._readbleDatabase = _database.getReadableDatabase();
 		}
-
-		return _readableDatabase.getReadableDatabase();
+		return this._readbleDatabase;
 	}
 	
 	/**
 	 * 読み込み専用データベースを閉じる。
 	 */
 	private synchronized void closeReadableDatabase() {
-		if ( _readableDatabase != null ) {
-			_readableDatabase.close();
-			_readableDatabase = null;
+		if ( this._readbleDatabase != null && this._isKeepConnent == false ) {
+			this._readbleDatabase.close();
+			this._readbleDatabase = null;
 		}
 	}
 
-	public SQLiteDatabase enterWritable( Context context ) {
+	public SQLiteDatabase enterWritable() {
 		this.enterWritableCriticalSection();
 		return this.openWritableDatabase();
 	}
@@ -129,7 +140,7 @@ public class DatabaseCriticalSection {
 	}
 	
 	private synchronized void leaveWritableCriticalSection() {
-		_writableDatabaseCriticalSection.remove( 0 );
+		this._writableDatabaseCriticalSection.remove( 0 );
 		notifyAll();
 	}
 	
@@ -138,38 +149,23 @@ public class DatabaseCriticalSection {
 	 * @return
 	 */
 	private synchronized SQLiteDatabase openWritableDatabase() {
-		if ( _writableDatabase == null ) {
-			try {
-				Class<?>[] types = { Context.class };
-				Object[] args = { this._context };
-				_writableDatabase = _databaseClass.getConstructor( types ).newInstance( args );
-			} catch (InstantiationException e) {
-				Logger.getInstance().error( e.getMessage() );
-			} catch (IllegalAccessException e) {
-				Logger.getInstance().error( e.getMessage() );
-			} catch (IllegalArgumentException e) {
-				Logger.getInstance().error( e.getMessage() );
-			} catch (InvocationTargetException e) {
-				Logger.getInstance().error( e.getMessage() );
-			} catch (NoSuchMethodException e) {
-				Logger.getInstance().error( e.getMessage() );
-			}
+		if ( this._writableDatabase == null ) {
+			this._writableDatabase = _database.getWritableDatabase();
 		}
-
-		return _writableDatabase.getWritableDatabase();
+		return this._writableDatabase;
 	}
 	
 	/**
 	 * 読み込み専用データベースを閉じる。
 	 */
 	private synchronized void closeWritableDatabase() {
-		if ( _writableDatabase != null ) {
-			_writableDatabase.close();
-			_writableDatabase = null;
+		if ( this._writableDatabase != null && this._isKeepConnent == false ) {
+			this._writableDatabase.close();
+			this._writableDatabase = null;
 		}
 	}
 	
 	private synchronized long getNewId() {
-		return _nextId++;
+		return this._nextId++;
 	}
 }

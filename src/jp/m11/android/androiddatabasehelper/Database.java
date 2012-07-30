@@ -73,12 +73,16 @@ public abstract class Database {
 		return this.getDatabaseName() + "." + Database.DATABASE_EXTENSION;
 	}
 
+	public Iterator<Class<? extends Table>> getTableClassIterator() {
+		return this._tableClasses.iterator();
+	}
+
 	public abstract int getVersion();
 	
 	public SQLiteDatabase getReadableDatabase() {
 		return _openHelper.getReadableDatabase();
 	}
-	
+
 	public SQLiteDatabase getWritableDatabase() {
 		return _openHelper.getWritableDatabase();
 	}

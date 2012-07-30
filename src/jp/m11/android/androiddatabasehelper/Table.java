@@ -76,6 +76,10 @@ public abstract class Table {
 
 	public abstract void upgrade( Context context, SQLiteDatabase database );
 
+	public Cursor query( SQLiteDatabase database, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit ) {
+		return this.query( database, null, selection, selectionArgs, groupBy, having, orderBy, limit );
+	}
+
 	public Cursor query( SQLiteDatabase database, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit ) {
 		return database.query( this.getTableName(), columns, selection, selectionArgs, groupBy, having, orderBy, limit );
 	}

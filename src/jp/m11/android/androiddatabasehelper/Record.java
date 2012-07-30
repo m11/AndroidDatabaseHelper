@@ -26,6 +26,8 @@ public class Record {
 
 	public Record( Class<? extends Table> tableClass ) {
 		Iterator<Column<?>> iterator = null;
+		Long now = System.currentTimeMillis();
+
 		this._table = TableInstanceHolder.getTableInstance( tableClass );
 
 		iterator = this._table.getColumnIterator();
@@ -39,6 +41,9 @@ public class Record {
 				Logger.getInstance().error( e.getMessage() );
 			}
 		}
+
+		this.getCreatedAtColumn().setValue( now );
+		this.getUpdatedAtColumn().setValue( now );
 	}
 
 	/**
