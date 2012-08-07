@@ -6,9 +6,9 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import jp.m11.android.androiddatabasehelper.column.AndroidIdColumn;
 import jp.m11.android.androiddatabasehelper.column.Column;
 import jp.m11.android.androiddatabasehelper.column.CreatedAtColumn;
-import jp.m11.android.androiddatabasehelper.column.IdColumn;
 import jp.m11.android.androiddatabasehelper.column.UpdatedAtColumn;
 import jp.m11.android.utils.logger.Logger;
 
@@ -40,7 +40,7 @@ public abstract class Table {
 		long now = 0;
 		now = System.currentTimeMillis();
 
-		_columns.add( new IdColumn() );
+		_columns.add( new AndroidIdColumn() );
 		_columns.add( new CreatedAtColumn( now ) );
 		_columns.add( new UpdatedAtColumn( now ) );
 	}
@@ -57,7 +57,7 @@ public abstract class Table {
 		while ( iterator.hasNext() ) {
 			Column<?> column = iterator.next();
 			sql += column.getColumnName() + " " + column.getDataTypeString();
-			if ( column.getColumnName().equals( "id" ) ) {
+			if ( column.getColumnName().equals( "_id" ) ) {
 				sql += " PRIMARY KEY AUTOINCREMENT";
 			}
 			if ( iterator.hasNext() ) {

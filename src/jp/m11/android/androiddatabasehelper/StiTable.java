@@ -30,5 +30,7 @@ public abstract class StiTable extends Table {
 		return super.query( database, columns, selection, stiSelectionArgs, groupBy, having, orderBy, limit );
 	}
 
-	public abstract String getType();
+	public String getType() {
+		return this.getTableName();
+	}
 }
