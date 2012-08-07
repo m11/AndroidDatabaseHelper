@@ -3,6 +3,7 @@ package jp.m11.android.androiddatabasehelper;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import jp.m11.android.androiddatabasehelper.column.AndroidIdColumn;
 import jp.m11.android.androiddatabasehelper.column.Column;
 import jp.m11.android.androiddatabasehelper.column.CreatedAtColumn;
 import jp.m11.android.androiddatabasehelper.column.UpdatedAtColumn;
@@ -59,7 +60,7 @@ public class Record {
 		rowId = database.insert( this._table.getTableName(), null, this.toContentValue() );
 	
 		if ( rowId != -1 ) {
-			this.getIdColumn().setValue( rowId );
+			this.getAndroidIdColumn().setValue( rowId );
 		}
 		else {
 			Logger.getInstance().warn( "Failed to insert." );
@@ -74,7 +75,7 @@ public class Record {
 	 * @return
 	 */
 	public int update( SQLiteDatabase database ) {
-		String[] whereArgs = { this.getIdColumn().getValue().toString() };
+		String[] whereArgs = { this.getAndroidIdColumn().getValue().toString() };
 		this.updateUpdatedAt();
 		return database.update( this._table.getTableName(), toContentValue(), "id = ?", whereArgs);
 	}
@@ -146,7 +147,7 @@ public class Record {
 	 * @return
 	 */
 	public int delete( SQLiteDatabase database ) {
-		String[] whereArgs = { this.getIdColumn().getValue().toString() };
+		String[] whereArgs = { this.getAndroidIdColumn().getValue().toString() };
 		return database.delete( this._table.getTableName(), "id = ?", whereArgs);
 	}
 
@@ -202,8 +203,8 @@ public class Record {
 	 * idカラムのインスタンスを取得する。
 	 * @return idカラムのインスタンス。
 	 */
-	public LongColumn getIdColumn() {
-		return ( LongColumn )this.getColumn( Table.COLUMN_ID );
+	public LongColumn getAndroidIdColumn() {
+		return ( LongColumn )this.getColumn( AndroidIdColumn.COLUMN_ID );
 	}
 
 	/**

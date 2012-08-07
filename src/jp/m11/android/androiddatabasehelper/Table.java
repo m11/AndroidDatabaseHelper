@@ -23,8 +23,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 public abstract class Table {
-	public final static String COLUMN_ID = "id";
-
 	public final static String XML_TAG_RECORD = "record";
 	public final static String XML_TAG_TABLE = "table";
 	public final static String XML_TAG_VALUE = "value";

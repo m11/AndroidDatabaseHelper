@@ -24,7 +24,12 @@ public class DatabaseCriticalSection {
 	private SQLiteDatabase _writableDatabase = null;
 
 	private boolean _isKeepConnent = false;
-	
+
+	/**
+	 * 引数に指定したデータベースのクリティカルセクションのインスタンスを生成する。
+	 * @param context
+	 * @param databaseClass
+	 */
 	private DatabaseCriticalSection( Context context, Class<? extends Database> databaseClass ) {
 		this._context = context;
 		this._databaseClass = databaseClass;
@@ -46,6 +51,13 @@ public class DatabaseCriticalSection {
 		}
 	}
 
+	/**
+	 * 引数に指定したデータベースのクリティカルセクションのインスタンスを取得する。
+	 * インスタンスはデータベースごとに1つのみ生成する。
+	 * @param context
+	 * @param databaseClass
+	 * @return
+	 */
 	public synchronized static DatabaseCriticalSection getInstance( Context context, Class<? extends Database> databaseClass ) {
 		DatabaseCriticalSection instance = DatabaseCriticalSection._instances.get( databaseClass );
 		if ( instance == null ) {
@@ -55,14 +67,27 @@ public class DatabaseCriticalSection {
 		return instance;
 	}
 
+	/**
+	 * クリティカルセクションから出たときにデータベースを閉じるかどうかを指定する。
+	 * ContentProviderを用いるときは常にtrueを指定しなければならない。
+	 * @param keepConnect trueの時データベースを開いたら閉じないようにする。
+	 */
 	public void setKeepConnect( boolean keepConnect ) {
 		this._isKeepConnent = keepConnect;
 	}
 
+	/**
+	 * データベースクラスを取得する。
+	 * @return
+	 */
 	public Database getDatabase() {
 		return this._database;
 	}
 
+	/**
+	 * 読み込み専用クリティカルセクションに入る。
+	 * @return
+	 */
 	public SQLiteDatabase enterReadable() {
 		this.enterReadableCriticalSection();
 		return this.openReadableDatabase();
@@ -117,11 +142,18 @@ public class DatabaseCriticalSection {
 		}
 	}
 
+	/**
+	 * 書き込み可能クリティカルセクションに入る。
+	 * @return
+	 */
 	public SQLiteDatabase enterWritable() {
 		this.enterWritableCriticalSection();
 		return this.openWritableDatabase();
 	}
-	
+
+	/**
+	 * 書き込み可能クリティカルセクションから出る。
+	 */
 	public void leaveWritable() {
 		this.closeWritableDatabase();
 		this.leaveWritableCriticalSection();
